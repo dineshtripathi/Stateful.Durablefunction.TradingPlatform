@@ -1,4 +1,4 @@
-namespace TradingFunctionEntityDurable.EntityModel;
+namespace TradingStatefulFunctionEntityDurable.EntityModel;
 /// <summary>
 /// The trade action.
 /// </summary>

@@ -1,4 +1,4 @@
-namespace TradingFunctionEntityDurable.EntityModel;
+namespace TradingStatefulFunctionEntityDurable.EntityModel;
 /// <summary>
 /// The trade status.
 /// </summary>
@@ -6,5 +6,6 @@ namespace TradingFunctionEntityDurable.EntityModel;
 public enum TradeStatus
 {
     Pending,
-    Executed
+    Executed,
+    Completed
 }

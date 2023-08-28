@@ -1,6 +1,6 @@
 using System;
 
-namespace TradingFunctionEntityDurable.EntityModel;
+namespace TradingStatefulFunctionEntityDurable.EntityModel;
 /// <summary>
 /// The trade completion info.
 /// </summary>

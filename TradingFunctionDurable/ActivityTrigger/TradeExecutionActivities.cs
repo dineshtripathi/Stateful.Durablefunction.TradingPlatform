@@ -1,12 +1,12 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
-using TradingFunctionEntityDurable.EntityModel;
-using TradingFunctionEntityDurable.EntityTrigger;
+using TradingStatefulFunctionEntityDurable.EntityModel;
+using TradingStatefulFunctionEntityDurable.EntityTrigger;
 
-namespace TradingFunctionEntityDurable.ActivityTrigger;
+namespace TradingStatefulFunctionEntityDurable.ActivityTrigger;
 /// <summary>
 /// The trade execution activities.
 /// </summary>

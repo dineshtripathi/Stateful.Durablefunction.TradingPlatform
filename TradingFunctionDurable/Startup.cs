@@ -1,12 +1,10 @@
 ﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using TradingFunctionEntityDurable.Processor;
+using TradingStatefulFunctionEntityDurable;
+using TradingStatefulFunctionEntityDurable.Processor;
+[assembly: FunctionsStartup(typeof(Startup))]
+namespace TradingStatefulFunctionEntityDurable;
 
-namespace TradingFunctionEntityDurable;
-
-/// <summary>
-/// The startup.
-/// </summary>
 public class Startup : FunctionsStartup
 {
     /// <summary>
@@ -15,6 +13,6 @@ public class Startup : FunctionsStartup
     /// <param name="builder">The builder.</param>
     public override void Configure(IFunctionsHostBuilder builder)
     {
-        builder.Services.AddSingleton<TradeManager>();
+        builder.Services.AddTransient<TradeManager>();
     }
 }

@@ -1,4 +1,4 @@
-namespace TradingFunctionEntityDurable.EntityModel;
+namespace TradingStatefulFunctionEntityDurable.EntityModel;
 /// <summary>
 /// The trade.
 /// </summary>
@@ -10,4 +10,5 @@ public class Trade
     public int Quantity { get; set; }
     public TradeAction Action { get; set; }
     public TradeStatus Status { get; set; }
+    public bool IsSoftDeleted { get; set; } = false;
 }

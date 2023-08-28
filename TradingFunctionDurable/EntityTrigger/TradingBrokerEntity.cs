@@ -1,9 +1,10 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using System;
-using TradingFunctionEntityDurable.EntityModel;
+using TradingStatefulFunctionEntityDurable.EntityModel;
 
-namespace TradingFunctionEntityDurable.EntityTrigger;
+namespace TradingStatefulFunctionEntityDurable.EntityTrigger;
 /// <summary>
 /// The trading broker entity.
 /// </summary>
@@ -15,12 +16,12 @@ public class TradingBrokerEntity
     /// </summary>
     /// <param name="context">The context.</param>
     [FunctionName(nameof(RunTradingBrokerEntity))]
-    public static void RunTradingBrokerEntity([EntityTrigger] IDurableEntityContext context)
+    public static async Task RunTradingBrokerEntity([EntityTrigger] IDurableEntityContext context)
     {
         try
         {
             Trade trade;
-            var brokerState = context.GetState<TradingBrokerState>();
+            var brokerState = context.GetState<TradingBrokerState>() ?? new TradingBrokerState();
             switch (context.OperationName.ToLowerInvariant())
             {
                 case "initiatetrade":
@@ -34,7 +35,8 @@ public class TradingBrokerEntity
                         Status = TradeStatus.Pending
                     };
                     context.SignalEntity(context.EntityId, nameof(TradingBrokerEntityDurableFunctions.RunTradeExecutionOrchestratorAsync), trade); // Start orchestrator
-                    context.SetState(new TradingBrokerState { ActiveTrade = trade });
+                    brokerState.ActiveTrade = trade;
+                    context.SetState(brokerState);
                     break;
 
                 case "executetrade":
@@ -42,11 +44,30 @@ public class TradingBrokerEntity
                     brokerState.ActiveTrade.Status = TradeStatus.Executed;
                     context.SetState(brokerState);
                     break;
+
                 case "completetrade":
                     var remarks = context.GetInput<string>();
-                    brokerState.IsDeleted = true;
+                    brokerState.IsSoftDeleted = true;
                     brokerState.Remarks = remarks;
                     context.SetState(brokerState);
+                    break;
+
+                case "softdeletetrade":
+                    brokerState.ActiveTrade.IsSoftDeleted = true;
+                    context.SetState(brokerState);
+                    break;
+
+                case "softdeletestate":
+                    brokerState.IsSoftDeleted = true;
+                    context.SetState(brokerState);
+                    break;
+
+                case "finalizetrade":
+                    brokerState.ActiveTrade.Status = TradeStatus.Completed;
+                    context.SetState(brokerState);
+                    break;
+
+                default:
                     break;
             }
         }
@@ -56,4 +77,5 @@ public class TradingBrokerEntity
             throw;
         }
     }
+
 }

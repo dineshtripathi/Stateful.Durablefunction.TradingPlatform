@@ -1,18 +1,18 @@
-﻿using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using TradingFunctionEntityDurable.EntityModel;
-using TradingFunctionEntityDurable.EntityTrigger;
-using TradingFunctionEntityDurable.Processor;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using TradingStatefulFunctionEntityDurable.EntityModel;
+using TradingStatefulFunctionEntityDurable.EntityTrigger;
+using TradingStatefulFunctionEntityDurable.Processor;
 
-namespace TradingFunctionEntityDurable.HttpStart;
+namespace TradingStatefulFunctionEntityDurable.HttpStart;
 
 /// <summary>
 /// The trading broker http functions.
@@ -43,7 +43,7 @@ public class TradingBrokerHttpFunctions
     /// <param name="log"></param>
     /// <returns>A Task.</returns>
     [FunctionName("TradingBrokerHttpStart")]
-    public static async Task<HttpResponseMessage> RunTradingBrokerHttpStart(
+    public async Task<HttpResponseMessage> RunTradingBrokerHttpStart(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = "TradingBroker/{entityKey}/{operationType}")] HttpRequestMessage req,
         [DurableClient] IDurableEntityClient client,
         string entityKey,
@@ -67,6 +67,9 @@ public class TradingBrokerHttpFunctions
                 case "completetrade":
                     var remarks = await req.Content.ReadAsStringAsync();
                     await client.SignalEntityAsync(entityId, "completetrade", remarks);
+                    break;
+                case "finalizetrade":
+                    await client.SignalEntityAsync(entityId, "finalizetrade", null); // Assuming no additional data is needed
                     break;
                 default:
                     return new HttpResponseMessage(HttpStatusCode.BadRequest)
@@ -105,7 +108,7 @@ public class TradingBrokerHttpFunctions
     /// <param name="log">The log.</param>
     /// <returns>A Task.</returns>
     [FunctionName("GetBrokerState")]
-    public static async Task<HttpResponseMessage> RunGetBrokerState(
+    public async Task<HttpResponseMessage> RunGetBrokerState(
     [HttpTrigger(AuthorizationLevel.Function, "get", Route = "TradingBroker/{entityKey}/{operationType}")] HttpRequestMessage req,
     [DurableClient] IDurableEntityClient client,
     string entityKey,
@@ -215,8 +218,8 @@ public class TradingBrokerHttpFunctions
     {
         try
         {
-            var entityId = new EntityId(nameof(TradingBrokerEntity), tradeId);
-            var stateResponse = await client.ReadEntityStateAsync<Trade>(entityId);
+            var entityId = new EntityId(nameof(TradingBrokerEntity.RunTradingBrokerEntity), tradeId);
+            var stateResponse = await client.ReadEntityStateAsync<TradingBrokerState>(entityId);
 
             if (!stateResponse.EntityExists)
             {
@@ -226,7 +229,7 @@ public class TradingBrokerHttpFunctions
                 };
             }
 
-            var trade = stateResponse.EntityState;
+            var trade = stateResponse.EntityState.ActiveTrade;
 
             var completionInfo = _tradeManager.CompleteTrade(trade);
 
@@ -244,5 +247,26 @@ public class TradingBrokerHttpFunctions
                 Content = new StringContent(ex.Message, Encoding.UTF8, "application/json")
             };
         }
+    }
+    [FunctionName("SoftDeleteTradeHttpEndpoint")]
+    public async Task<HttpResponseMessage> SoftDeleteTrade(
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "TradingBroker/{entityKey}/softdeletetrade")] HttpRequestMessage req,
+        [DurableClient] IDurableEntityClient client,
+        string entityKey)
+    {
+        var entityId = new EntityId(nameof(TradingBrokerEntity), entityKey);
+        await client.SignalEntityAsync(entityId, "softdeletetrade", null);
+        return new HttpResponseMessage(HttpStatusCode.OK);
+    }
+
+    [FunctionName("SoftDeleteStateHttpEndpoint")]
+    public async Task<HttpResponseMessage> SoftDeleteState(
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "TradingBroker/{entityKey}/softdeletestate")] HttpRequestMessage req,
+        [DurableClient] IDurableEntityClient client,
+        string entityKey)
+    {
+        var entityId = new EntityId(nameof(TradingBrokerEntity), entityKey);
+        await client.SignalEntityAsync(entityId, "softdeletestate", null);
+        return new HttpResponseMessage(HttpStatusCode.OK);
     }
 }
