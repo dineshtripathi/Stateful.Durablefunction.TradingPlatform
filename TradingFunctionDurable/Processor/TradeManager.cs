@@ -17,12 +17,13 @@ public class TradeManager
     {
         // This could involve interacting with other systems, APIs, databases, etc.
 
-        bool isTradeSuccessful = true; // as of now setting up as true , in real world scenario it will be set by other systems,api's ,database, etc 
+        var isTradeSuccessful = true; // as of now setting up as true , in real world scenario it will be set by other systems,api's ,database, etc 
 
-        TradeCompletionInfo completionInfo = new TradeCompletionInfo();
-
-        completionInfo.CompletionDate = DateTime.UtcNow;
-        completionInfo.CompletedBy = "AutomatedSystem"; 
+        var completionInfo = new TradeCompletionInfo
+        {
+            CompletionDate = DateTime.UtcNow,
+            CompletedBy = "AutomatedSystem"
+        };
 
         if (isTradeSuccessful)
         {
